@@ -31,23 +31,23 @@
 		}
 	});
 </script>
-
+<!--
 {#if prompts.length > 0}
 	<div class="mb-2 flex gap-1 text-sm font-medium items-center text-gray-400 dark:text-gray-600">
 		<Bolt />
 		{$i18n.t('Suggested')}
 	</div>
 {/if}
-
+-->
 <div class="w-full">
 	<div
 		class="relative w-full flex gap-2 snap-x snap-mandatory md:snap-none overflow-x-auto tabs"
 		id="suggestions-container"
 	>
 		{#each prompts as prompt, promptIdx}
-			<div class="snap-center shrink-0">
+		<div class=" snap-center shrink-0 border border-[#F2F4F7] bg-white rounded-lg">
 				<button
-					class="flex flex-col flex-1 shrink-0 w-64 justify-between h-36 p-5 px-6 bg-gray-50 hover:bg-gray-100 dark:bg-gray-850 dark:hover:bg-gray-800 rounded-3xl transition group"
+					class="w-[320px] flex flex-col flex-1 shrink-0 w-64 justify-between h-24 p-5 px-6 bg-gray-50 hover:bg-gray-100 dark:bg-gray-850 dark:hover:bg-gray-800 rounded-mg transition group"
 					on:click={() => {
 						submitPrompt(prompt.content);
 					}}
@@ -68,7 +68,7 @@
 							</div>
 						{/if}
 					</div>
-
+                    <!--
 					<div class="w-full flex justify-between">
 						<div
 							class="text-xs text-gray-400 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-500 transition self-center"
@@ -92,7 +92,7 @@
 								/>
 							</svg>
 						</div>
-					</div>
+					</div> -->
 				</button>
 			</div>
 		{/each}

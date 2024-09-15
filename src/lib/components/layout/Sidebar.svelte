@@ -291,8 +291,8 @@
 				<div class="self-center mx-1.5">
 					<img
 						crossorigin="anonymous"
-						src="{WEBUI_BASE_URL}/static/favicon.png"
-						class=" size-6 -translate-x-1.5 rounded-full"
+						src="{WEBUI_BASE_URL}/static/Yubi.svg"
+						class=" size-6 -translate-x-1.5 "
 						alt="logo"
 					/>
 				</div>

@@ -995,7 +995,7 @@
 								if ($settings.notificationEnabled && !document.hasFocus()) {
 									const notification = new Notification(`${model.id}`, {
 										body: responseMessage.content,
-										icon: `${WEBUI_BASE_URL}/static/favicon.png`
+										icon: `${WEBUI_BASE_URL}/static/Yubi.png`
 									});
 								}
 
@@ -1303,7 +1303,7 @@
 				if ($settings.notificationEnabled && !document.hasFocus()) {
 					const notification = new Notification(`${model.id}`, {
 						body: responseMessage.content,
-						icon: `${WEBUI_BASE_URL}/static/favicon.png`
+						icon: `${WEBUI_BASE_URL}/static/Yubi.png`
 					});
 				}
 
@@ -1799,6 +1799,7 @@
 	</div>
 {/if}
 
+{#if $user?.role == 'admin'}
 <ChatControls
 	models={selectedModelIds.reduce((a, e, i, arr) => {
 		const model = $models.find((m) => m.id === e);
@@ -1817,3 +1818,4 @@
 	chatId={$chatId}
 	{eventTarget}
 />
+{/if}
