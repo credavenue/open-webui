@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 # Initialize device type args
+#FROM 155577958684.dkr.ecr.ap-south-1.amazonaws.com/dso-devops-ml:sagemaker-3.8.15-devsec 
 # use build args in the docker build commmand with --build-arg="BUILDARG=true"
 ARG USE_CUDA=false
 ARG USE_OLLAMA=false
@@ -17,7 +18,9 @@ ARG UID=0
 ARG GID=0
 
 ######## WebUI frontend ########
-FROM --platform=$BUILDPLATFORM node:21-alpine3.19 as build
+#FROM --platform=$BUILDPLATFORM node:21-alpine3.19 as build
+FROM node:21-alpine3.19 as build
+
 ARG BUILD_HASH
 
 WORKDIR /app
