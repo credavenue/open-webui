@@ -1,0 +1,11 @@
+experiment_name: ca-ds-nlp-compare-exp
+instance_type: medium
+# model artifacts S3 path for Model Inference
+S3:
+  dev_bucket: s3://dso-ml-mlflow-ap-south-1-155577958684/artifacts/41/467f7b5887814d7dbfe371e8b8aedd59/artifacts/
+  qa_bucket:  s3://dso-ml-mlflow-ap-south-1-155577958684/artifacts/41/467f7b5887814d7dbfe371e8b8aedd59/artifacts/
+  stg_bucket: s3://dso-ml-mlflow-ap-south-1-155577958684/artifacts/41/467f7b5887814d7dbfe371e8b8aedd59/artifacts/
+  prd_bucket: s3://dso-ml-mlflow-ap-south-1-155577958684/artifacts/41/467f7b5887814d7dbfe371e8b8aedd59/artifacts/
+# model artifacts
+artifacts: 
+  touch: touch
