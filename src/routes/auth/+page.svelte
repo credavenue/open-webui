@@ -110,9 +110,9 @@
 			<div class=" self-center">
 				<img
 					crossorigin="anonymous"
-					src="{WEBUI_BASE_URL}/static/favicon.png"
-					class=" w-8 rounded-full"
+					src="{WEBUI_BASE_URL}/static/YubiGPT.svg"
 					alt="logo"
+					style="width: 200px;"
 				/>
 			</div>
 		</div>
@@ -142,7 +142,7 @@
 						<div>
 							{$i18n.t('Signing in')}
 							{$i18n.t('to')}
-							{$WEBUI_NAME}
+							{"YUBI GPT"}
 						</div>
 
 						<div>
@@ -162,12 +162,12 @@
 							<div class=" text-2xl font-medium">
 								{mode === 'signin' ? $i18n.t('Sign in') : $i18n.t('Sign up')}
 								{$i18n.t('to')}
-								{$WEBUI_NAME}
+								{"YUBI GPT"}
 							</div>
 
 							{#if mode === 'signup'}
 								<div class=" mt-1 text-xs font-medium text-gray-500">
-									ⓘ {$WEBUI_NAME}
+									ⓘ {"YUBI GPT"}
 									{$i18n.t(
 										'does not make any external connections, and your data stays securely on your locally hosted server.'
 									)}

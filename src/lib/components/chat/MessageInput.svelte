@@ -12,7 +12,8 @@
 		config,
 		showCallOverlay,
 		tools,
-		user as _user
+		user as _user,
+		chatId
 	} from '$lib/stores';
 	import { blobToFile, findWordIndices } from '$lib/utils';
 
@@ -35,10 +36,13 @@
 	import FilesOverlay from './MessageInput/FilesOverlay.svelte';
 	import Commands from './MessageInput/Commands.svelte';
 	import XMark from '../icons/XMark.svelte';
-
+    import Doc from '../layout/Doc.svelte';
+	import { createNewChat, getChatById } from '$lib/apis/chats';
+	import { goto } from '$app/navigation';
 	const i18n = getContext('i18n');
 
 	export let transparentBackground = false;
+	export let initNewChat: Function;
 
 	export let submitPrompt: Function;
 	export let stopResponse: Function;
@@ -57,7 +61,8 @@
 
 	let inputFiles;
 	let dragged = false;
-
+    
+	let selectedChatId = null;
 	let user = null;
 	let chatInputPlaceholder = '';
 
@@ -208,6 +213,29 @@
 			}
 		});
 	};
+    
+	const handleSelectDoc = async (event) => {
+		selectedChatId = null;
+					await goto('/');
+					const newChatButton = document.getElementById('new-chat-button');
+					setTimeout(() => {
+						newChatButton?.click();
+						if ($mobile) {
+							showSidebar.set(false);
+						}
+					}, 0);
+        console.log(event);
+		files = [];
+							const newfiles = 
+								{
+									type: event?.detail?.type ?? 'file',
+									...event.detail,
+									status: 'processed'
+								}
+							;
+		files = [newfiles];
+   
+    };
 
 	onMount(() => {
 		window.setTimeout(() => chatTextAreaElement?.focus(), 0);
@@ -248,7 +276,7 @@
 		};
 
 		window.addEventListener('keydown', handleKeyDown);
-
+		window.addEventListener('selectDoc', handleSelectDoc);
 		dropZone?.addEventListener('dragover', onDragOver);
 		dropZone?.addEventListener('drop', onDrop);
 		dropZone?.addEventListener('dragleave', onDragLeave);
@@ -403,7 +431,7 @@
 						<div
 							class="flex-1 flex flex-col relative w-full rounded-3xl px-1.5 bg-gray-50 dark:bg-gray-850 dark:text-gray-100"
 							dir={$settings?.chatDirection ?? 'LTR'}
-						>
+						><!--
 							{#if files.length > 0}
 								<div class="mx-1 mt-2.5 mb-1 flex flex-wrap gap-2">
 									{#each files as file, fileIdx}
@@ -477,7 +505,7 @@
 									{/each}
 								</div>
 							{/if}
-
+					-->
 							<div class=" flex">
 								<div class=" ml-0.5 self-end mb-1.5 flex space-x-1">
 									<InputMenu
@@ -526,7 +554,7 @@
 									class="scrollbar-hidden bg-gray-50 dark:bg-gray-850 dark:text-gray-100 outline-none w-full py-3 px-1 rounded-xl resize-none h-[48px]"
 									placeholder={chatInputPlaceholder !== ''
 										? chatInputPlaceholder
-										: $i18n.t('Send a Message')}
+										: $i18n.t('Message YubiGPT')}
 									bind:value={prompt}
 									on:keypress={(e) => {
 										if (

@@ -42,7 +42,18 @@
 					.map((doc) => doc.collection_name)
 			}))
 	];
-
+    
+	$: tagsDocument = [...$documents
+			.reduce((a, e, i, arr) => {
+				return [...new Set([...a, ...(e?.content?.tags ?? []).map((tag) => tag.name)])];
+			}, [])
+			.map((tag) => ({
+				name: tag,
+				type: 'collection',
+				collection_names: $documents
+					.filter((doc) => (doc?.content?.tags ?? []).map((tag) => tag.name).includes(tag))
+					.map((doc) => doc.collection_name)
+			}))]
 	$: filteredCollections = collections
 		.filter((collection) => findByName(collection, command))
 		.sort((a, b) => a.name.localeCompare(b.name));
@@ -110,21 +121,17 @@
 	};
 </script>
 
-{#if filteredItems.length > 0 || prompt.split(' ')?.at(0)?.substring(1).startsWith('http')}
-	<div
-		id="commands-container"
-		class="pl-1 pr-12 mb-3 text-left w-full absolute bottom-0 left-0 right-0 z-10"
-	>
-		<div class="flex w-full dark:border dark:border-gray-850 rounded-lg">
-			<div class=" bg-gray-50 dark:bg-gray-850 w-10 rounded-l-lg text-center">
-				<div class=" text-lg font-semibold mt-2">#</div>
+{#if tagsDocument.length > 0 || prompt.split(' ')?.at(0)?.substring(1).startsWith('http')}
+	<div class="text-left absolute ">
+		<div class="dark:border dark:border-gray-850 rounded-lg">
+			<div class=" bg-gray-50 dark:bg-gray-850 rounded-l-lg text-center">
 			</div>
 
 			<div
-				class="max-h-60 flex flex-col w-full rounded-r-xl bg-white dark:bg-gray-900 dark:text-gray-100"
+				class=""
 			>
 				<div class="m-1 overflow-y-auto p-1 rounded-r-xl space-y-0.5 scrollbar-hidden">
-					{#each filteredItems as doc, docIdx}
+					{#each tagsDocument as doc, docIdx}
 						<button
 							class=" px-3 py-1.5 rounded-xl w-full text-left {docIdx === selectedIdx
 								? ' bg-gray-50 dark:bg-gray-850 dark:text-gray-100 selected-command-option-button'

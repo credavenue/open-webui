@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
-	import { toast } from 'svelte-sonner';
-
+	import { tick, getContext } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import {
 		WEBUI_NAME,
 		chatId,
@@ -12,6 +11,8 @@
 		showSidebar,
 		user
 	} from '$lib/stores';
+    import { documents } from '$lib/stores';
+    import { removeFirstHashWord, isValidHttpUrl } from '$lib/utils';
 
 	import { slide } from 'svelte/transition';
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
@@ -22,6 +23,7 @@
 	import UserMenu from './Sidebar/UserMenu.svelte';
 	import MenuLines from '../icons/MenuLines.svelte';
 	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
+	import Doc from './Doc.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -32,11 +34,91 @@
 	export let chat;
 	export let selectedModels;
 
-	export let showModelSelector = true;
+	export let showModelSelector = false;
 	export let showControls = false;
+
+	export let className = 'w-[32rem]';
 
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
+	let selectedModelIdx = 0;
+	let promptsElement;
+	let documentsElement;
+	let modelsElement;
+	export let files = [];
+	let shows = false;
+
+	export let prompt = '';
+	export let messages = [];
+
+	
+	const dispatch = createEventDispatcher();
+	let selectedIdx = 0;
+	let filteredItems = [];
+	let filteredDocs = [];
+	let collections = [];
+
+	$: collections = [
+		...($documents.length > 0
+			? [
+					{
+						name: 'All Documents',
+						type: 'collection',
+						title: $i18n.t('All Documents'),
+						collection_names: $documents.map((doc) => doc.collection_name)
+					}
+			  ]
+			: []),
+		...$documents
+			.reduce((a, e, i, arr) => {
+				return [...new Set([...a, ...(e?.content?.tags ?? []).map((tag) => tag.name)])];
+			}, [])
+			.map((tag) => ({
+				name: tag,
+				type: 'collection',
+				collection_names: $documents
+					.filter((doc) => (doc?.content?.tags ?? []).map((tag) => tag.name).includes(tag))
+					.map((doc) => doc.collection_name)
+			}))
+	];
+	//tagsDocument stores documents with tags
+    $: tagsDocument = [...$documents
+			.reduce((a, e, i, arr) => {
+				return [...new Set([...a, ...(e?.content?.tags ?? []).map((tag) => tag.name)])];
+			}, [])
+			.map((tag) => ({
+				name: tag,
+				type: 'collection',
+				collection_names: $documents
+					.filter((doc) => (doc?.content?.tags ?? []).map((tag) => tag.name).includes(tag))
+					.map((doc) => doc.collection_name)
+			}))]
+    
+
+			type ObjectWithName = {
+		name: string;
+	};
+
+	const findByName = (obj: ObjectWithName, prompt: string) => {
+		const name = obj.name.toLowerCase();
+		return name.includes(prompt.toLowerCase().split(' ')?.at(0)?.substring(1) ?? '');
+	};
+
+	export const selectUp = () => {
+		selectedIdx = Math.max(0, selectedIdx - 1);
+	};
+
+	export const selectDown = () => {
+		selectedIdx = Math.min(selectedIdx + 1, filteredItems.length - 1);
+	};
+
+    const confirmSelect = async (doc) => {
+		dispatch('selectDoc', doc);
+		const chatInputElement = document.getElementById('chat-textarea');
+		await tick();
+		chatInputElement?.focus();
+		await tick();
+	};
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -62,11 +144,23 @@
 				</button>
 			</div>
 
-			<div class="flex-1 overflow-hidden max-w-full">
-				{#if showModelSelector}
-					<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
-				{/if}
+			<div class="flex-1" >
+				<div>
+					<Doc/>
+				</div>
 			</div>
+
+
+<style>
+	.scrollbar-hidden:active::-webkit-scrollbar-thumb,
+	.scrollbar-hidden:focus::-webkit-scrollbar-thumb,
+	.scrollbar-hidden:hover::-webkit-scrollbar-thumb {
+		visibility: visible;
+	}
+	.scrollbar-hidden::-webkit-scrollbar-thumb {
+		visibility: hidden;
+	}
+</style>
 
 			<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
 				<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
@@ -105,7 +199,7 @@
 						</button>
 					</Menu>
 				{/if}
-
+                {#if $user?.role == 'admin'}
 				<Tooltip content={$i18n.t('Controls')}>
 					<button
 						class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
@@ -119,7 +213,7 @@
 						</div>
 					</button>
 				</Tooltip>
-
+                {/if}
 				<Tooltip content={$i18n.t('New Chat')}>
 					<button
 						id="new-chat-button"

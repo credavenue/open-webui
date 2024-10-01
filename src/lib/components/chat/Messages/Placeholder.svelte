@@ -35,7 +35,7 @@
 
 {#key mounted}
 	<div class="m-auto w-full max-w-6xl px-8 lg:px-20">
-		<div class="flex justify-start">
+		<div class="flex justify-center">
 			<div class="flex -space-x-4 mb-0.5" in:fade={{ duration: 200 }}>
 				{#each models as model, modelIdx}
 					<button
@@ -49,16 +49,23 @@
 							)}
 							placement="right"
 						>
-							<img
-								crossorigin="anonymous"
-								src={model?.info?.meta?.profile_image_url ??
-									($i18n.language === 'dg-DG'
-										? `/doge.png`
-										: `${WEBUI_BASE_URL}/static/favicon.png`)}
-								class=" size-[2.7rem] rounded-full border-[1px] border-gray-200 dark:border-none"
-								alt="logo"
-								draggable="false"
-							/>
+						<figure class="relative w-[200px] flex flex-col items-center">
+                            <img
+                                crossorigin="anonymous"
+                                src={model?.info?.meta?.profile_image_url ??
+                                    ($i18n.language === 'dg-DG'
+                                        ? `/doge.png`
+                                        : `${WEBUI_BASE_URL}/static/YubiGPT.svg`)}
+                                class="w-[200px] "
+                                alt="logo"
+                                draggable="false"
+                            />
+
+                            <figcaption class="mt-2 text-center whitespace-nowrap overflow-x-auto" style="color: #667085;">
+                                Hi, type in a message to start conversation with YubiGPT <!-- Display model name or a default text -->
+                            </figcaption>
+                        </figure>
+					
 						</Tooltip>
 					</button>
 				{/each}
@@ -84,8 +91,8 @@
 				<div class=" capitalize line-clamp-1" in:fade={{ duration: 200 }}>
 					{#if models[selectedModelIdx]?.info}
 						{models[selectedModelIdx]?.info?.name}
-					{:else}
-						{$i18n.t('Hello, {{name}}', { name: $user.name })}
+					<!--{:else}
+						{$i18n.t('Hello, {{name}}', { name: $user.name })}-->
 					{/if}
 				</div>
 
@@ -114,15 +121,11 @@
 								{/if}
 							</div>
 						{/if}
-					{:else}
-						<div class=" font-medium text-gray-400 dark:text-gray-500 line-clamp-1 font-p">
-							{$i18n.t('How can I help you today?')}
-						</div>
 					{/if}
 				</div>
 			</div>
 		</div>
-
+		<div style="height: 80px;"></div>
 		<div class=" w-full font-primary" in:fade={{ duration: 200, delay: 300 }}>
 			<Suggestions
 				suggestionPrompts={models[selectedModelIdx]?.info?.meta?.suggestion_prompts ??
