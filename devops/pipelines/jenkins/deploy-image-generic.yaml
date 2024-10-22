@@ -9,7 +9,7 @@
           service_name: yubigpt
           namespace: yubigpt-qa
           app_repo: open-webui
-          app_branch: feature/UI_Changes
+          app_branch: main
           project: yubigpt
           helm_or_kubectl_apply: "kubectl apply -f dir/*.yaml -n {namespace}"
           k8s_manifest_repo: open-webui_manifest
