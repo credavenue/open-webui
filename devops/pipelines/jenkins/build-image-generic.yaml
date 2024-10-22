@@ -6,7 +6,7 @@
       - "{folder}/self-serve-build-api":
           folder: "Yubi/NonPrd/Common/YubiGPT/Int"
           repo_name: open-webui
-          branch: feature/UI_Changes
+          branch: main
           environment: qa
           service: yubiGPT
           namespace: yubigpt-qa
