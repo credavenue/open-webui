@@ -1,0 +1,17 @@
+- job-template: !include: promote-to-environment.tmpl
+
+- project:
+    name: common-promote-docker
+    jobs:
+      - "{folder}/promote-to-{env}":
+          folder: "Yubi/NonPrd/Common/YubiGPT/Int"
+          env: qa
+          service_name: yubigpt
+          namespace: yubigpt-qa
+          helm_or_kubectl_apply: "kubectl apply -f dir/*.yaml -n {namespace}"
+          project: yubigpt
+          app_org: credavenue
+          app_repo: open-webui
+          app_branch: feature/UI_Changes
+          k8s_manifest_repo: open-webui_manifest
+          k8s_manifest_branch: master
