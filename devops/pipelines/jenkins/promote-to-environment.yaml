@@ -4,7 +4,7 @@
     name: common-promote-docker
     jobs:
       - "{folder}/promote-to-{env}":
-          folder: "Architect/YubiGPT/Stg"
+          folder: "DeveloperCommon/SelfServe/YubiGPT/Stg"
           env: qa
           service_name: yubigpt
           namespace: yubigpt-qa
