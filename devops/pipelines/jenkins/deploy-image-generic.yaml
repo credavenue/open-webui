@@ -11,6 +11,6 @@
           app_repo: open-webui
           app_branch: main
           project: yubigpt
-          helm_or_kubectl_apply: "kubetcl apply -f ../k8smanifest/open-webui.yaml -n {namespace}"
+          helm_or_kubectl_apply: "kubectl apply -f ../k8smanifest/open-webui.yaml -n {namespace}"
           k8s_manifest_repo: open-webui_manifest
           k8s_manifest_branch: master
