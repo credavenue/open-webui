@@ -11,6 +11,6 @@
           app_repo: open-webui
           app_branch: main
           project: yubigpt
-          helm_or_kubectl_apply: "sed /"harbor.go-yubi.in/yubi/common-yubigpt:latest"/"harbor.go-yubi.in/yubi/common-yubigpt:${release_tag}"/ ../k8smanifest/open-webui.yaml; kubectl apply -f ../k8smanifest/ -n {namespace}"
+          helm_or_kubectl_apply: "sed /"harbor.go-yubi.in/yubi/common-yubigpt:latest"/"harbor.go-yubi.in/yubi/common-yubigpt:${release_tag}"/ ../k8smanifest/open-webui.yaml;cat  ../k8smanifest/open-webui.yaml; kubectl apply -f ../k8smanifest/ -n {namespace}"
           k8s_manifest_repo: open-webui_manifest
           k8s_manifest_branch: master
