@@ -12,7 +12,7 @@
           namespace: yubigpt-qa
           project: yubigpt
           app_build_command: ""   
-          docker_build_command: "docker build -t common-yubigpt -f ${WORKSPACE}/application/devops/docker/Dockerfile ."
+          docker_build_command: "docker build -t common-yubigpt -f application/devops/docker/Dockerfile ."
           deploy_job: Architect/YubiGPT/Int/self-serve-deploy-app
           repo_product: common
           repo_service: yubigpt
