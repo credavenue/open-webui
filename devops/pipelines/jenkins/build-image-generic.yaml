@@ -13,6 +13,6 @@
           project: yubigpt
           app_build_command: "npm run ci; npm run build"   
           docker_build_command: "docker build -t common-yubigpt ."
-          deploy_job: Yubi/NonPrd/Common/Open-WebUI/Int/self-serve-deploy-app
+          deploy_job: Yubi/NonPrd/Common/YubiGPT/Int/self-serve-deploy-app
           repo_product: common
           repo_service: yubigpt
