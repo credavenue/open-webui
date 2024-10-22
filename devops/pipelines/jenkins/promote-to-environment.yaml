@@ -4,7 +4,7 @@
     name: common-promote-docker
     jobs:
       - "{folder}/promote-to-{env}":
-          folder: "Yubi/NonPrd/Common/Open-WebUI/Int"
+          folder: "Yubi/NonPrd/Common/YubiGPT/Int"
           env: qa
           service_name: yubigpt
           namespace: yubigpt-qa
