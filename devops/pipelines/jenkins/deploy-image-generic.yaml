@@ -4,7 +4,7 @@
     name: app-deploy
     jobs:
       - "{folder}/self-serve-deploy-app":
-          folder: "Yubi/NonPrd/Common/YubiGPT/Int"
+          folder: "Architect/YubiGPT/Int"
           env: qa
           service_name: yubigpt
           namespace: yubigpt-qa
