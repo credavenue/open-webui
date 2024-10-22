@@ -1,0 +1,22 @@
+- job-template: !include: build-image-generic.tmpl
+
+- project:
+    name: build-api
+    jobs:
+      - "{folder}/self-serve-build-api":
+          folder: "Yubi/NonPrd/Common/Open-WebUI/Int"
+          repo_name: open-webui
+          branch: feature/UI_Changes
+          environment: qa
+          service: yubiGPT
+          namespace: yubigpt-qa
+          project: yubigpt
+          app_build_command :
+                            - "COPY package.json package-lock.json ./"
+                            - "npm run ci "
+                            - "npm run build "
+                            
+          docker_build_command: "docker build -t common-openwebui"
+          deploy_job: Yubi/NonPrd/Common/Open-WebUI/Int/self-serve-deploy-app
+          repo_product: common
+          repo_service: openwebui
