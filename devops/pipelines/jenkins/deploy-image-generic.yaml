@@ -6,7 +6,7 @@
       - "{folder}/self-serve-deploy-app":
           folder: "Architect/YubiGPT/Int"
           env: qa
-          service_name: yubigpt
+          service_name: yubiGPT
           namespace: yubigpt-qa
           app_repo: open-webui
           app_branch: main
