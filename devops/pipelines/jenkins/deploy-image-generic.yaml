@@ -1,0 +1,16 @@
+- job-template: !include: deploy-image-generic.tmpl
+
+- project:
+    name: app-deploy
+    jobs:
+      - "{folder}/self-serve-deploy-app":
+          folder: "Yubi/NonPrd/Common/Open-WebUI/Int"
+          env: qa
+          service_name: yubigpt
+          namespace: yubigpt-qa
+          app_repo: open-webui
+          app_branch: feature/UI_Changes
+          project: yubigpt
+          helm_or_kubectl_apply: "kubectl apply -f dir/*.yaml -n {namespace}"
+          k8s_manifest_repo: open-webui_manifest
+          k8s_manifest_branch: master
