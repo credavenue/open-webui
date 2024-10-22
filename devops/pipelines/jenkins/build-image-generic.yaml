@@ -4,7 +4,7 @@
     name: build-api
     jobs:
       - "{folder}/self-serve-build-api":
-          folder: "Yubi/NonPrd/Common/Open-WebUI/Int"
+          folder: "Yubi/NonPrd/Common/YubiGPT/Int"
           repo_name: open-webui
           branch: feature/UI_Changes
           environment: qa
