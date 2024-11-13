@@ -3,24 +3,12 @@
 - project:
     name: common-promote-docker
     jobs:
-      - "{folder}/promote-to-{env}":
-          folder: "Architect/YubiGPT/Stg"
-          env: qa
-          service_name: yubigpt
-          namespace: yubigpt-qa
-          helm_or_kubectl_apply: "kubectl apply -f dir/*.yaml -n {namespace}"
-          project: yubigpt
-          app_org: credavenue
-          app_repo: open-webui
-          app_branch: main
-          k8s_manifest_repo: open-webui_manifest
-          k8s_manifest_branch: master
      - "{folder}/promote-to-{env}":
-          folder: "Architect/YubiGPT/Prod"
-          env: qa
+          folder: "Architect/YubiGPT/Prd"
+          env: prd
           service_name: yubigpt
-          namespace: yubigpt-qa
-          helm_or_kubectl_apply: "kubectl apply -f dir/*.yaml -n {namespace}"
+          namespace: yubigpt-prd
+          helm_or_kubectl_apply: sed -i "s|tagtoreplace|"${{RELEASE_TAG}}"|g" ../k8smanifest/prd/open-webui.yaml; cat  ../k8smanifest/prd/open-webui.yaml; kubectl apply -f ../k8smanifest/prd/ -n yubigpt-prd
           project: yubigpt
           app_org: credavenue
           app_repo: open-webui
