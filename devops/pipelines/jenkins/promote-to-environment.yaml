@@ -8,6 +8,7 @@
           env: prd
           service_name: yubigpt
           namespace: yubigpt-prd
+          eks_cluster: yubi-mlops-prd-eks-cluster
           helm_or_kubectl_apply: sed -i "s|tagtoreplace|"${{RELEASE_TAG}}"|g" ../k8smanifest/prd/open-webui.yaml; cat  ../k8smanifest/prd/open-webui.yaml; kubectl apply -f ../k8smanifest/prd/ -n yubigpt-prd
           project: yubigpt
           app_org: credavenue
