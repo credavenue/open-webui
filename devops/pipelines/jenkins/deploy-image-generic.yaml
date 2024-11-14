@@ -11,6 +11,7 @@
           app_repo: open-webui
           app_branch: main
           project: yubigpt
+          eks_cluster: yubi-qa-eks-cluster
           helm_or_kubectl_apply: sed -i "s|tagtoreplace|"${{RELEASE_TAG}}"|g" ../k8smanifest/qa/open-webui.yaml; cat  ../k8smanifest/qa/open-webui.yaml; kubectl apply -f ../k8smanifest/qa/ -n yubigpt-qa
           k8s_manifest_repo: open-webui_manifest
           k8s_manifest_branch: master
