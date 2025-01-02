@@ -1,0 +1,18 @@
+- job-template: !include: build-image-generic.tmpl
+
+- project:
+    name: build-api
+    jobs:
+      - "{folder}/self-serve-build-api":
+          folder: "Architect/YubiGPT/Int"
+          repo_name: open-webui
+          branch: master
+          environment: qa
+          service: yubiGPT
+          namespace: yubigpt-qa
+          project: yubigpt
+          app_build_command: ""   
+          docker_build_command: "docker build -t common-yubigpt -f $WORKSPACE/application/devops/docker/Dockerfile ."
+          deploy_job: Architect/YubiGPT/Int/self-serve-deploy-app
+          repo_product: common
+          repo_service: yubigpt
