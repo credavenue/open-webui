@@ -105,6 +105,21 @@
 		await setSessionUser(sessionUser);
 	};
 
+	const clearCookiesAndSiteData = () => {
+        // Clear cookies
+        document.cookie.split(";").forEach((cookie) => {
+          document.cookie = cookie
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+
+        // Clear localStorage and sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+
+        toast.success("Cookies and site data cleared.");
+    };
+
 	let onboarding = false;
 
 	onMount(async () => {
@@ -327,6 +342,11 @@
 								</button>
 							</div>
 						{/if}
+                        <div class="mt-2">
+                            <button on:click={clearCookiesAndSiteData}>
+                                <span>'Clear Cookies and Site Data'</span>
+                            </button>
+                        </div>
 					</div>
 				{/if}
 			</div>
