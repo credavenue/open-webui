@@ -321,6 +321,11 @@
 									</button>
 								{/if}
 							</div>
+							<div class="mt-2">
+                                <button on:click={clearCookiesAndSiteData}>
+                                    'Clear Cookies and Site Data'
+                                </button>
+                            </div>
 						{/if}
 
 						{#if $config?.features.enable_ldap && $config?.features.enable_login_form}
@@ -345,11 +350,6 @@
 					</div>
 				{/if}
 			</div>
-			<div class="mt-2">
-            <button on:click={clearCookiesAndSiteData}>
-                'Clear Cookies and Site Data'
-            </button>
-        </div>
 		</div>
 	{/if}
 </div>
