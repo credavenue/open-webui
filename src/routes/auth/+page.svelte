@@ -345,11 +345,11 @@
 					</div>
 				{/if}
 			</div>
-		</div>
-		<div class="mt-2">
+			<div class="mt-2">
             <button on:click={clearCookiesAndSiteData}>
-                <span>'Clear Cookies and Site Data'</span>
+                'Clear Cookies and Site Data'
             </button>
         </div>
+		</div>
 	{/if}
 </div>
