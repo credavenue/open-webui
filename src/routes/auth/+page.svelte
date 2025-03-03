@@ -106,17 +106,20 @@
 	};
 
 	const clearCookiesAndSiteData = async () => {
-        try {
-            const response = await fetch('/clear-cookies', { method: 'GET' });
-            if (response.ok) {
-                const data = await response.json();
-                console.log(data.message);
-            } else {
-                console.error('Error clearing cookies:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Error clearing cookies:', error);
-        }
+       	const response = await fetch(`${WEBUI_API_BASE_URL}/auths/clear-cookies`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.log(err);
+			return null;
+		});
 
 		// Clear caches
 		if ('caches' in window) {
