@@ -120,7 +120,7 @@ async def clear_cookies(response: Response):
     response.delete_cookie(key="token")
     response.delete_cookie(key="oauth_id_token")
     response.delete_cookie(key="route")
-    return {"message": "Cookies cleared"}
+    return JSONResponse({"message": "Cookies cleared"})
 
 ############################
 # Update Profile

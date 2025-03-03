@@ -106,10 +106,14 @@
 	};
 
 	const clearCookiesAndSiteData = async () => {
-		try {
+        try {
             const response = await fetch('/clear-cookies', { method: 'GET' });
-            const data = await response.json();
-            console.log(data.message);
+            if (response.ok) {
+                const data = await response.json();
+                console.log(data.message);
+            } else {
+                console.error('Error clearing cookies:', response.statusText);
+            }
         } catch (error) {
             console.error('Error clearing cookies:', error);
         }
