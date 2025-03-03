@@ -115,6 +115,12 @@ async def get_session_user(
         "permissions": user_permissions,
     }
 
+@router.get("/clear-cookies")
+async def clear_cookies(response: Response):
+    response.delete_cookie(key="token")
+    response.delete_cookie(key="oauth_id_token")
+    response.delete_cookie(key="route")
+    return {"message": "Cookies cleared"}
 
 ############################
 # Update Profile

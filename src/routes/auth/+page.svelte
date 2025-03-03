@@ -105,20 +105,30 @@
 		await setSessionUser(sessionUser);
 	};
 
-	const clearCookiesAndSiteData = () => {
-        // Clear cookies
-        document.cookie.split(";").forEach((cookie) => {
-          document.cookie = cookie
-            .replace(/^ +/, "")
-            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-        });
+	const clearCookiesAndSiteData = async () => {
+		try {
+            const response = await fetch('/clear-cookies', { method: 'GET' });
+            const data = await response.json();
+            console.log(data.message);
+        } catch (error) {
+            console.error('Error clearing cookies:', error);
+        }
 
-        // Clear localStorage and sessionStorage
-        localStorage.clear();
-        sessionStorage.clear();
+		// Clear caches
+		if ('caches' in window) {
+			caches.keys().then((names) => {
+				names.forEach((name) => {
+					caches.delete(name);
+				});
+			});
+		}
 
-        toast.success("Cookies and site data cleared.");
-    };
+		// Clear localStorage and sessionStorage
+		localStorage.clear();
+		sessionStorage.clear();
+
+		toast.success("Cookies and site data cleared.");
+	};
 
 	let onboarding = false;
 
@@ -219,11 +229,11 @@
 									</div>
 								{/if}
 							</div>
-							
+
 						</form>
 
 						{#if Object.keys($config?.oauth?.providers ?? {}).length > 0}
-							
+
 							<div class="flex flex-col space-y-2">
 								{#if $config?.oauth?.providers?.google}
 									<button
@@ -322,10 +332,13 @@
 								{/if}
 							</div>
 							<div class="mt-2">
-                                <button on:click={clearCookiesAndSiteData}>
-                                    'Clear Cookies and Site Data'
-                                </button>
-                            </div>
+								<button 
+								class="flex justify-center items-center text-xs w-full text-center underline"
+								type="button"
+								on:click={clearCookiesAndSiteData}>
+									'Clear Cookies and Site Data'
+								</button>
+							</div>
 						{/if}
 
 						{#if $config?.features.enable_ldap && $config?.features.enable_login_form}
@@ -353,3 +366,4 @@
 		</div>
 	{/if}
 </div>
+
