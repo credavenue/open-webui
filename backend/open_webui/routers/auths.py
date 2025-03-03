@@ -119,7 +119,11 @@ async def get_session_user(
 async def clear_cookies(response: Response):
     response.delete_cookie(key="token")
     response.delete_cookie(key="oauth_id_token")
-    response.delete_cookie(key="route")
+    paths = ["/", "/api", "/app", "/assets", "/_app", "/favicon", "/static"]  # Add any other relevant paths
+
+    for path in paths:
+        response.delete_cookie(key="route", path=path)
+
     return {"message": "Cookies cleared"}
 
 ############################

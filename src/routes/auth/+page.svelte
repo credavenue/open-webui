@@ -135,6 +135,7 @@
 		sessionStorage.clear();
 
 		toast.success("Cookies and site data cleared.");
+		goto('/auth');
 	};
 
 	let onboarding = false;
