@@ -115,6 +115,16 @@ async def get_session_user(
         "permissions": user_permissions,
     }
 
+@router.post("/clear-cookies")
+async def clear_cookies(response: Response):
+    response.delete_cookie(key="token")
+    response.delete_cookie(key="oauth_id_token")
+    paths = ["/", "/api", "/app", "/assets", "/_app", "/favicon", "/static"]  # Add any other relevant paths
+
+    for path in paths:
+        response.delete_cookie(key="route", path=path)
+
+    return {"message": "Cookies cleared"}
 
 ############################
 # Update Profile
