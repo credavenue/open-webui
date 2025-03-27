@@ -118,8 +118,7 @@ RUN apt-get update && \
     gnupg2 \
     lsb-release && \
     # Add Fluentd repository
-    curl -fsSL https://packages.treasuredata.com/GPG-KEY-td-agent | gpg --dearmor -o /usr/share/keyrings/treasure-data-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/treasure-data-archive-keyring.gpg] https://packages.treasuredata.com/4/debian/$(lsb_release -cs)/ $(lsb_release -cs) contrib" > /etc/apt/sources.list.d/treasure-data.list && \
+    curl -fsSL https://toolbelt.treasuredata.com/sh/install-debian-bookworm-fluent-package5-lts.sh | sh && \
     apt-get update && \
     apt-get install -y --no-install-recommends td-agent && \
     # Install Fluentd plugins
