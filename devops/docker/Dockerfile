@@ -86,6 +86,11 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 ## Torch Extensions ##
 # ENV TORCH_EXTENSIONS_DIR="/.cache/torch_extensions"
 
+# Copy Fluentd and Supervisord configurations
+COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
+COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
+COPY --chown=$UID:$GID ./devops/docker/entrypoint.sh /app/backend/entrypoint.sh
+
 #### Other models ##########################################################
 
 WORKDIR /app/backend
@@ -175,11 +180,6 @@ COPY --chown=$UID:$GID --from=build /app/package.json /app/package.json
 
 # copy backend files
 COPY --chown=$UID:$GID ./backend .
-
-# Copy Fluentd and Supervisord configurations
-COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
-COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
-COPY --chown=$UID:$GID ./devops/docker/entrypoint.sh /entrypoint.sh
 
 # Make entrypoint.sh executable
 RUN chmod +x /entrypoint.sh
