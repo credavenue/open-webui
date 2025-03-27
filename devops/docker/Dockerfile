@@ -105,6 +105,25 @@ RUN echo -n 00000000-0000-0000-0000-000000000000 > $HOME/.cache/chroma/telemetry
 # Make sure the user has access to the app and root directory
 RUN chown -R $UID:$GID /app $HOME
 
+# Install Fluentd and Supervisord
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    supervisor \
+    curl \
+    gnupg2 \
+    lsb-release && \
+    # Add Fluentd repository
+    curl -fsSL https://packages.treasuredata.com/GPG-KEY-td-agent | gpg --dearmor -o /usr/share/keyrings/treasure-data-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/treasure-data-archive-keyring.gpg] https://packages.treasuredata.com/4/debian/$(lsb_release -cs)/ $(lsb_release -cs) contrib" > /etc/apt/sources.list.d/treasure-data.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends td-agent && \
+    # Install Fluentd plugins
+    td-agent-gem install fluent-plugin-kubernetes_metadata_filter && \
+    td-agent-gem install fluent-plugin-http && \
+    # Cleanup
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN if [ "$USE_OLLAMA" = "true" ]; then \
     apt-get update && \
     # Install pandoc and netcat
@@ -149,12 +168,6 @@ RUN pip3 install uv && \
     fi; \
     chown -R $UID:$GID /app/backend/data/
 
-
-
-# copy embedding weight from build
-# RUN mkdir -p /root/.cache/chroma/onnx_models/all-MiniLM-L6-v2
-# COPY --from=build /app/onnx /root/.cache/chroma/onnx_models/all-MiniLM-L6-v2/onnx
-
 # copy built frontend files
 COPY --chown=$UID:$GID --from=build /app/build /app/build
 COPY --chown=$UID:$GID --from=build /app/CHANGELOG.md /app/CHANGELOG.md
@@ -162,6 +175,14 @@ COPY --chown=$UID:$GID --from=build /app/package.json /app/package.json
 
 # copy backend files
 COPY --chown=$UID:$GID ./backend .
+
+# Copy Fluentd and Supervisord configurations
+COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
+COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
+COPY --chown=$UID:$GID ./devops/docker/entrypoint.sh /entrypoint.sh
+
+# Make entrypoint.sh executable
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8080
 
@@ -173,4 +194,4 @@ ARG BUILD_HASH
 ENV WEBUI_BUILD_VERSION=${BUILD_HASH}
 ENV DOCKER=true
 
-CMD [ "bash", "start.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
