@@ -88,8 +88,6 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 ## Torch Extensions ##
 # ENV TORCH_EXTENSIONS_DIR="/.cache/torch_extensions"
 
-# Copy Fluentd and Supervisord configurations
-// ... existing code ...
 # Create log directories
 RUN mkdir -p /etc/supervisor/ && \
     mkdir -p /etc/fluentd/ && \
