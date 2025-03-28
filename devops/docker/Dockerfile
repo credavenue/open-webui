@@ -93,8 +93,7 @@ RUN mkdir -p /etc/supervisor/ && \
     mkdir -p /etc/fluentd/ && \
     mkdir -p /var/log/fluentd && \
     mkdir -p /app/backend/data/fluentd && \
-    touch /app/backend/data/audit.log && \
-    chown -R $UID:$GID /etc/fluentd/ /var/log/fluentd /app/backend/data/fluentd /app/backend/data/audit.log
+    chown -R $UID:$GID /etc/fluentd/ /var/log/fluentd /app/backend/data/fluentd
 
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
