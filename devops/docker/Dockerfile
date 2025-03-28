@@ -98,7 +98,6 @@ RUN mkdir -p /etc/supervisor/ && \
 
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
-// ... existing code ...
 
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
