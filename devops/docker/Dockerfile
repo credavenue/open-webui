@@ -129,7 +129,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ruby ruby-dev v
     gem install yajl-ruby -v 1.4.1 && \
     gem install fluentd --no-doc && \
     gem install fluent-plugin-kubernetes_metadata_filter && \
-    gem install fluent-plugin-http
+    gem install fluent-plugin-http && \
+    fluent-gem install "fluent-plugin-newrelic"
 
 RUN if [ "$USE_OLLAMA" = "true" ]; then \
     apt-get update && \
