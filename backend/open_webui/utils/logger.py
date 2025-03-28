@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import os
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -10,6 +11,7 @@ from open_webui.env import (
     AUDIT_LOG_LEVEL,
     AUDIT_LOGS_FILE_PATH,
     GLOBAL_LOG_LEVEL,
+    BACKEND_DIR,
 )
 
 
@@ -97,20 +99,38 @@ def start_logger():
     Initializes and configures Loguru's logger with distinct handlers:
 
     A console (stdout) handler for general log messages (excluding those marked as auditable).
+    A file handler for general logs.
     An optional file handler for audit logs if audit logging is enabled.
-    Additionally, this function reconfigures Python’s standard logging to route through Loguru and adjusts logging levels for Uvicorn.
+    Additionally, this function reconfigures Python's standard logging to route through Loguru and adjusts logging levels for Uvicorn.
 
     Parameters:
     enable_audit_logging (bool): Determines whether audit-specific log entries should be recorded to file.
     """
     logger.remove()
 
+    # Add stdout handler
     logger.add(
         sys.stdout,
         level=GLOBAL_LOG_LEVEL,
         format=stdout_format,
         filter=lambda record: "auditable" not in record["extra"],
     )
+
+    # Add file handler for general logs
+    try:
+        log_file_path = os.path.join(BACKEND_DIR, "logs", "app.log")
+        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+        logger.add(
+            log_file_path,
+            level=GLOBAL_LOG_LEVEL,
+            format=stdout_format,
+            rotation="500 MB",  # Rotate when file reaches 500MB
+            retention="10 days",  # Keep logs for 10 days
+            compression="zip",
+            filter=lambda record: "auditable" not in record["extra"],
+        )
+    except Exception as e:
+        logger.error(f"Failed to initialize log file handler: {str(e)}")
 
     if AUDIT_LOG_LEVEL != "NONE":
         try:

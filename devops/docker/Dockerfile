@@ -92,8 +92,9 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 RUN mkdir -p /etc/supervisor/ && \
     mkdir -p /etc/fluentd/ && \
     mkdir -p /var/log/ && \
+    mkdir -p /app/backend/logs && \
     mkdir -p /app/backend/data/fluentd && \
-    chown -R $UID:$GID /etc/fluentd/ /var/log/ /app/backend/data
+    chown -R $UID:$GID /etc/fluentd/ /var/log/ /app/backend/data /app/backend/logs
 
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
@@ -198,9 +199,5 @@ USER $UID:$GID
 ARG BUILD_HASH
 ENV WEBUI_BUILD_VERSION=${BUILD_HASH}
 ENV DOCKER=true
-
-LABEL com.docker.compose.logging.driver=fluentd \
-      com.docker.compose.logging.options.fluentd-address=localhost:24224 \
-      com.docker.compose.logging.options.tag="docker.{{.Name}}"
 
 ENTRYPOINT ["/app/backend/entrypoint.sh"]
