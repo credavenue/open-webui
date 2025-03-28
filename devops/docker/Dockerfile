@@ -199,4 +199,8 @@ ARG BUILD_HASH
 ENV WEBUI_BUILD_VERSION=${BUILD_HASH}
 ENV DOCKER=true
 
+LABEL com.docker.compose.logging.driver=fluentd \
+      com.docker.compose.logging.options.fluentd-address=localhost:24224 \
+      com.docker.compose.logging.options.tag="docker.{{.Name}}"
+
 ENTRYPOINT ["/app/backend/entrypoint.sh"]
