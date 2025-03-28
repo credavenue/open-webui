@@ -27,7 +27,7 @@ ARG BUILD_HASH
 ENV http_proxy=http://proxy.dso.cadevops.net:3331 \
     https_proxy=http://proxy.dso.cadevops.net:3331 \
     no_proxy=169.254.169.254,localhost,vivriticapital.net,cadevops.net \
-    NODE_OPTIONS="--max_old_space_size=4096"
+    NODE_OPTIONS="--max_old_space_size=8192"
 
 WORKDIR /app
 
@@ -122,9 +122,10 @@ RUN echo -n 00000000-0000-0000-0000-000000000000 > $HOME/.cache/chroma/telemetry
 RUN chown -R $UID:$GID /app $HOME
 
 # Install Fluentd and Supervisord
-RUN apt-get update && apt-get install -y --no-install-recommends ruby ruby-dev vim curl \
-    libglib2.0-0 libsm6 libfontconfig1 libxrender1 libxext6 software-properties-common ffmpeg libsm6 libxext6 libpq-dev  -y \
-    ca-certificates -y nginx build-essential cmake poppler-utils && \
+RUN apt-get update && apt-get install -y --no-install-recommends ruby ruby-dev vim curl python3-dev python3-setuptools \
+    python3-pip libglib2.0-0 libsm6 libfontconfig1 libxrender1 libxext6 software-properties-common ffmpeg libsm6 libxext6 libpq-dev  -y \
+    ca-certificates -y python3-unidecode nginx build-essential cmake poppler-utils && \
+    python3 -m pip install --upgrade pip && \
     pip3 install supervisor && \
     gem install bundler -v 2.3.26 && \
     gem install yajl-ruby -v 1.4.1 && \
@@ -173,7 +174,7 @@ RUN pip3 install uv && \
     python -c "import os; from sentence_transformers import SentenceTransformer; SentenceTransformer(os.environ['RAG_EMBEDDING_MODEL'], device='cpu')" && \
     python -c "import os; from faster_whisper import WhisperModel; WhisperModel(os.environ['WHISPER_MODEL'], device='cpu', compute_type='int8', download_root=os.environ['WHISPER_MODEL_DIR'])"; \
     python -c "import os; import tiktoken; tiktoken.get_encoding(os.environ['TIKTOKEN_ENCODING_NAME'])"; \
-    fi; \
+    fi;
 
 # copy built frontend files
 COPY --chown=$UID:$GID --from=build /app/build /app/build
@@ -183,9 +184,9 @@ COPY --chown=$UID:$GID --from=build /app/package.json /app/package.json
 # copy backend files
 COPY --chown=$UID:$GID ./backend .
 
-RUN chown -R $UID:$GID /app/backend/data/
 # Make entrypoint.sh executable
-RUN chmod +x /app/backend/entrypoint.sh
+RUN chown -R $UID:$GID /app/backend/data/ && \
+    chmod +x /app/backend/entrypoint.sh
 
 EXPOSE 8080
 
