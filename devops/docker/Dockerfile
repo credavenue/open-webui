@@ -24,10 +24,7 @@ ARG GID=0
 FROM node:21-alpine3.19 as build
 ARG BUILD_HASH
 
-ENV http_proxy=http://proxy.dso.cadevops.net:3331 \
-    https_proxy=http://proxy.dso.cadevops.net:3331 \
-    no_proxy=169.254.169.254,localhost,vivriticapital.net,cadevops.net \
-    NODE_OPTIONS="--max_old_space_size=8192"
+ENV NODE_OPTIONS="--max_old_space_size=8192"
 
 WORKDIR /app
 
@@ -87,10 +84,6 @@ ENV TIKTOKEN_ENCODING_NAME="cl100k_base" \
 
 ## Hugging Face download cache ##
 ENV HF_HOME="/app/backend/data/cache/embedding/models"
-
-ENV http_proxy=http://proxy.dso.cadevops.net:3331 \
-    https_proxy=http://proxy.dso.cadevops.net:3331 \
-    no_proxy=169.254.169.254,localhost,vivriticapital.net,cadevops.net
 
 ## Torch Extensions ##
 # ENV TORCH_EXTENSIONS_DIR="/.cache/torch_extensions"
