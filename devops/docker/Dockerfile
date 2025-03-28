@@ -177,7 +177,7 @@ COPY --chown=$UID:$GID --from=build /app/package.json /app/package.json
 COPY --chown=$UID:$GID ./backend .
 
 # Make entrypoint.sh executable
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /app/backend/entrypoint.sh
 
 EXPOSE 8080
 
@@ -189,4 +189,4 @@ ARG BUILD_HASH
 ENV WEBUI_BUILD_VERSION=${BUILD_HASH}
 ENV DOCKER=true
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/app/backend/entrypoint.sh"]
