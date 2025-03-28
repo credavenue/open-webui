@@ -175,7 +175,6 @@ RUN pip3 install uv && \
     python -c "import os; from faster_whisper import WhisperModel; WhisperModel(os.environ['WHISPER_MODEL'], device='cpu', compute_type='int8', download_root=os.environ['WHISPER_MODEL_DIR'])"; \
     python -c "import os; import tiktoken; tiktoken.get_encoding(os.environ['TIKTOKEN_ENCODING_NAME'])"; \
     fi; \
-    chown -R $UID:$GID /app/backend/data/
 
 # copy built frontend files
 COPY --chown=$UID:$GID --from=build /app/build /app/build
@@ -185,6 +184,7 @@ COPY --chown=$UID:$GID --from=build /app/package.json /app/package.json
 # copy backend files
 COPY --chown=$UID:$GID ./backend .
 
+RUN chown -R $UID:$GID /app/backend/data/
 # Make entrypoint.sh executable
 RUN chmod +x /app/backend/entrypoint.sh
 
