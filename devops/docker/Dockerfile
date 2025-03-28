@@ -91,10 +91,9 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 # Create log directories
 RUN mkdir -p /etc/supervisor/ && \
     mkdir -p /etc/fluentd/ && \
-    mkdir -p /var/log/fluentd && \
-    mkdir -p /var/log/webapp && \
+    mkdir -p /var/log/ && \
     mkdir -p /app/backend/data/fluentd && \
-    chown -R $UID:$GID /etc/fluentd/ /var/log/fluentd /var/log/webapp /app/backend/data
+    chown -R $UID:$GID /etc/fluentd/ /var/log/ /app/backend/data
 
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
