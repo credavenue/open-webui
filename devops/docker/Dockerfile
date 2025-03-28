@@ -87,6 +87,8 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 # ENV TORCH_EXTENSIONS_DIR="/.cache/torch_extensions"
 
 # Copy Fluentd and Supervisord configurations
+RUN mkdir -p /etc/supervisor/
+RUN mkdir -p /etc/fluentd/
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=$UID:$GID ./devops/docker/entrypoint.sh /app/backend/entrypoint.sh
@@ -111,22 +113,16 @@ RUN echo -n 00000000-0000-0000-0000-000000000000 > $HOME/.cache/chroma/telemetry
 RUN chown -R $UID:$GID /app $HOME
 
 # Install Fluentd and Supervisord
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    supervisor \
-    curl \
-    gnupg2 \
-    lsb-release && \
-    # Add Fluentd repository
-    curl -fsSL https://toolbelt.treasuredata.com/sh/install-debian-bookworm-fluent-package5-lts.sh | sh && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends td-agent && \
-    # Install Fluentd plugins
-    td-agent-gem install fluent-plugin-kubernetes_metadata_filter && \
-    td-agent-gem install fluent-plugin-http && \
-    # Cleanup
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ruby ruby-dev vim curl python3-dev python3-setuptools \
+    python3-pip libglib2.0-0 libsm6 libfontconfig1 libxrender1 libxext6 software-properties-common ffmpeg libsm6 libxext6 libpq-dev  -y \
+    ca-certificates -y python3-unidecode nginx build-essential cmake poppler-utils && \
+    python3 -m pip install --upgrade pip && \
+    pip3 install supervisor && \
+    gem install bundler -v 2.3.26 && \
+    gem install yajl-ruby -v 1.4.1 && \
+    gem install fluentd --no-doc && \
+    gem install fluent-plugin-kubernetes_metadata_filter && \
+    gem install fluent-plugin-http
 
 RUN if [ "$USE_OLLAMA" = "true" ]; then \
     apt-get update && \
