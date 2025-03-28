@@ -89,8 +89,13 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 # ENV TORCH_EXTENSIONS_DIR="/.cache/torch_extensions"
 
 # Copy Fluentd and Supervisord configurations
-RUN mkdir -p /etc/supervisor/
-RUN mkdir -p /etc/fluentd/
+RUN mkdir -p /etc/supervisor/ && \
+    mkdir -p /etc/fluentd/ && \
+    mkdir -p /var/log/fluentd && \
+    mkdir -p /app/backend/data/fluentd && \
+    touch /app/backend/data/audit.log && \
+    chown -R $UID:$GID /etc/fluentd/ /var/log/fluentd /app/backend/data/fluentd /app/backend/data/audit.log
+
 COPY --chown=$UID:$GID ./devops/docker/fluent.conf /etc/fluentd/fluent.conf
 COPY --chown=$UID:$GID ./devops/docker/supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=$UID:$GID ./devops/docker/entrypoint.sh /app/backend/entrypoint.sh
