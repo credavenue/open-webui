@@ -2,6 +2,7 @@
 
 #echo "## :::> Starting Supervisor <:::"
 #exec /usr/local/bin/supervisord -c /etc/supervisor/supervisord.conf
-fluentd -c /etc/fluentd/fluent.conf -v
+fluentd -c /etc/fluentd/fluent.conf -v &
 sleep 5
+chmod +x /app/backend/start.sh
 exec bash /app/backend/start.sh
