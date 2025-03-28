@@ -26,7 +26,8 @@ ARG BUILD_HASH
 
 ENV http_proxy=http://proxy.dso.cadevops.net:3331 \
     https_proxy=http://proxy.dso.cadevops.net:3331 \
-    no_proxy=169.254.169.254,localhost,vivriticapital.net,cadevops.net
+    no_proxy=169.254.169.254,localhost,vivriticapital.net,cadevops.net \
+    NODE_OPTIONS="--max_old_space_size=4096"
 
 WORKDIR /app
 
@@ -170,6 +171,7 @@ RUN pip3 install uv && \
     else \
     pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --no-cache-dir && \
     uv pip install --system -r requirements.txt --no-cache-dir && \
+    mkdir -p /app/backend/data/ && \
     python -c "import os; from sentence_transformers import SentenceTransformer; SentenceTransformer(os.environ['RAG_EMBEDDING_MODEL'], device='cpu')" && \
     python -c "import os; from faster_whisper import WhisperModel; WhisperModel(os.environ['WHISPER_MODEL'], device='cpu', compute_type='int8', download_root=os.environ['WHISPER_MODEL_DIR'])"; \
     python -c "import os; import tiktoken; tiktoken.get_encoding(os.environ['TIKTOKEN_ENCODING_NAME'])"; \
