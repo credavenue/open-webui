@@ -122,10 +122,9 @@ RUN echo -n 00000000-0000-0000-0000-000000000000 > $HOME/.cache/chroma/telemetry
 RUN chown -R $UID:$GID /app $HOME
 
 # Install Fluentd and Supervisord
-RUN apt-get update && apt-get install -y --no-install-recommends ruby ruby-dev vim curl python3-dev python3-setuptools \
-    python3-pip libglib2.0-0 libsm6 libfontconfig1 libxrender1 libxext6 software-properties-common ffmpeg libsm6 libxext6 libpq-dev  -y \
-    ca-certificates -y python3-unidecode nginx build-essential cmake poppler-utils && \
-    python3 -m pip install --upgrade pip && \
+RUN apt-get update && apt-get install -y --no-install-recommends ruby ruby-dev vim curl \
+    libglib2.0-0 libsm6 libfontconfig1 libxrender1 libxext6 software-properties-common ffmpeg libsm6 libxext6 libpq-dev  -y \
+    ca-certificates -y nginx build-essential cmake poppler-utils && \
     pip3 install supervisor && \
     gem install bundler -v 2.3.26 && \
     gem install yajl-ruby -v 1.4.1 && \
