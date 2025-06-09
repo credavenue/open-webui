@@ -35,7 +35,6 @@
 			if (sessionUser.token) {
 				localStorage.token = sessionUser.token;
 			}
-
 			$socket.emit('user-join', { auth: { token: sessionUser.token } });
 			await user.set(sessionUser);
 			await config.set(await getBackendConfig());
@@ -182,8 +181,8 @@
 					<img
 						crossorigin="anonymous"
 						src="{WEBUI_BASE_URL}/static/splash.png"
-						class=" w-6 rounded-full dark:invert"
-						alt="logo"
+						class=" w-6 rounded-full"
+						alt=""
 					/>
 				</div>
 			</div>
@@ -230,7 +229,7 @@
 								</div>
 
 								{#if $config?.onboarding ?? false}
-									<div class=" mt-1 text-xs font-medium text-gray-500">
+									<div class="mt-1 text-xs font-medium text-gray-600 dark:text-gray-500">
 										ⓘ {$WEBUI_NAME}
 										{$i18n.t(
 											'does not make any external connections, and your data stays securely on your locally hosted server.'
@@ -238,7 +237,6 @@
 									</div>
 								{/if}
 							</div>
-
 						</form>
 
 						{#if Object.keys($config?.oauth?.providers ?? {}).length > 0}
