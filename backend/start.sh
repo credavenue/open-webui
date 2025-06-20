@@ -71,4 +71,6 @@ fi
 
 PYTHON_CMD=$(command -v python3 || command -v python)
 
+exec "$PYTHON_CMD" -m mcpo --config mcp-config.json &
+
 WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips '*' --workers 4
