@@ -62,6 +62,7 @@ class DocumentChunk(Base):
     id = Column(Text, primary_key=True)
     vector = Column(Vector(dim=VECTOR_LENGTH), nullable=True)
     collection_name = Column(Text, nullable=False)
+    client_id = Column(Text, nullable=True, index=True)
 
     if PGVECTOR_PGCRYPTO:
         text = Column(LargeBinary, nullable=True)
@@ -123,6 +124,12 @@ class PgvectorClient(VectorDBBase):
                     "ON document_chunk (collection_name);"
                 )
             )
+            self.session.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_document_chunk_client_id "
+                    "ON document_chunk (client_id);"
+                )
+            )
             self.session.commit()
             log.info("Initialization complete.")
         except Exception as e:
@@ -176,7 +183,7 @@ class PgvectorClient(VectorDBBase):
             vector = vector[:VECTOR_LENGTH]
         return vector
 
-    def insert(self, collection_name: str, items: List[VectorItem]) -> None:
+    def insert(self, collection_name: str, items: List[VectorItem], client_id: str = None) -> None:
         try:
             if PGVECTOR_PGCRYPTO:
                 for item in items:
@@ -186,9 +193,9 @@ class PgvectorClient(VectorDBBase):
                         text(
                             """
                             INSERT INTO document_chunk
-                            (id, vector, collection_name, text, vmetadata)
+                            (id, vector, collection_name, client_id, text, vmetadata)
                             VALUES (
-                                :id, :vector, :collection_name,
+                                :id, :vector, :collection_name, :client_id,
                                 pgp_sym_encrypt(:text, :key),
                                 pgp_sym_encrypt(:metadata::text, :key)
                             )
@@ -199,6 +206,7 @@ class PgvectorClient(VectorDBBase):
                             "id": item["id"],
                             "vector": vector,
                             "collection_name": collection_name,
+                            "client_id": client_id,
                             "text": item["text"],
                             "metadata": json.dumps(item["metadata"]),
                             "key": PGVECTOR_PGCRYPTO_KEY,
@@ -215,6 +223,7 @@ class PgvectorClient(VectorDBBase):
                         id=item["id"],
                         vector=vector,
                         collection_name=collection_name,
+                        client_id=client_id,
                         text=item["text"],
                         vmetadata=item["metadata"],
                     )
@@ -229,7 +238,7 @@ class PgvectorClient(VectorDBBase):
             log.exception(f"Error during insert: {e}")
             raise
 
-    def upsert(self, collection_name: str, items: List[VectorItem]) -> None:
+    def upsert(self, collection_name: str, items: List[VectorItem], client_id: str = None) -> None:
         try:
             if PGVECTOR_PGCRYPTO:
                 for item in items:
@@ -238,15 +247,16 @@ class PgvectorClient(VectorDBBase):
                         text(
                             """
                             INSERT INTO document_chunk
-                            (id, vector, collection_name, text, vmetadata)
+                            (id, vector, collection_name, client_id, text, vmetadata)
                             VALUES (
-                                :id, :vector, :collection_name,
+                                :id, :vector, :collection_name, :client_id,
                                 pgp_sym_encrypt(:text, :key),
                                 pgp_sym_encrypt(:metadata::text, :key)
                             )
                             ON CONFLICT (id) DO UPDATE SET
                               vector = EXCLUDED.vector,
                               collection_name = EXCLUDED.collection_name,
+                              client_id = EXCLUDED.client_id,
                               text = EXCLUDED.text,
                               vmetadata = EXCLUDED.vmetadata
                         """
@@ -255,6 +265,7 @@ class PgvectorClient(VectorDBBase):
                             "id": item["id"],
                             "vector": vector,
                             "collection_name": collection_name,
+                            "client_id": client_id,
                             "text": item["text"],
                             "metadata": json.dumps(item["metadata"]),
                             "key": PGVECTOR_PGCRYPTO_KEY,
@@ -277,11 +288,13 @@ class PgvectorClient(VectorDBBase):
                         existing.collection_name = (
                             collection_name  # Update collection_name if necessary
                         )
+                        existing.client_id = client_id
                     else:
                         new_chunk = DocumentChunk(
                             id=item["id"],
                             vector=vector,
                             collection_name=collection_name,
+                            client_id=client_id,
                             text=item["text"],
                             vmetadata=item["metadata"],
                         )
@@ -300,6 +313,7 @@ class PgvectorClient(VectorDBBase):
         collection_name: str,
         vectors: List[List[float]],
         limit: Optional[int] = None,
+        client_id: Optional[str] = None,
     ) -> Optional[SearchResult]:
         try:
             if not vectors:
@@ -350,9 +364,14 @@ class PgvectorClient(VectorDBBase):
             subq = (
                 select(*result_fields)
                 .where(DocumentChunk.collection_name == collection_name)
-                .order_by(
-                    (DocumentChunk.vector.cosine_distance(query_vectors.c.q_vector))
-                )
+            )
+            
+            # Only filter by client_id if it's provided
+            if client_id is not None:
+                subq = subq.where(DocumentChunk.client_id == client_id)
+                
+            subq = subq.order_by(
+                (DocumentChunk.vector.cosine_distance(query_vectors.c.q_vector))
             )
             if limit is not None:
                 subq = subq.limit(limit)

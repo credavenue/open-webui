@@ -90,6 +90,7 @@ def upload_file(
     process: bool = Query(True),
     internal: bool = False,
     user=Depends(get_verified_user),
+    client_id: Optional[str] = None,
 ):
     log.info(f"file.content_type: {file.content_type}")
 
@@ -151,6 +152,7 @@ def upload_file(
                     },
                 }
             ),
+            client_id,
         )
         if process:
             try:

@@ -32,6 +32,8 @@ class File(Base):
     created_at = Column(BigInteger)
     updated_at = Column(BigInteger)
 
+    client_id = Column(String, nullable=True) # for multi-tenancy within same knowledge base
+
 
 class FileModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -50,6 +52,8 @@ class FileModel(BaseModel):
 
     created_at: Optional[int]  # timestamp in epoch
     updated_at: Optional[int]  # timestamp in epoch
+
+    client_id: Optional[str] = None
 
 
 ####################
@@ -79,12 +83,15 @@ class FileModelResponse(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    client_id: Optional[str] = None
+
 
 class FileMetadataResponse(BaseModel):
     id: str
     meta: dict
     created_at: int  # timestamp in epoch
     updated_at: int  # timestamp in epoch
+    client_id: Optional[str] = None
 
 
 class FileForm(BaseModel):
@@ -98,7 +105,7 @@ class FileForm(BaseModel):
 
 
 class FilesTable:
-    def insert_new_file(self, user_id: str, form_data: FileForm) -> Optional[FileModel]:
+    def insert_new_file(self, user_id: str, form_data: FileForm, client_id:str=None) -> Optional[FileModel]:
         with get_db() as db:
             file = FileModel(
                 **{
@@ -106,6 +113,7 @@ class FilesTable:
                     "user_id": user_id,
                     "created_at": int(time.time()),
                     "updated_at": int(time.time()),
+                    "client_id": client_id,
                 }
             )
 
@@ -139,6 +147,7 @@ class FilesTable:
                     meta=file.meta,
                     created_at=file.created_at,
                     updated_at=file.updated_at,
+                    client_id=file.client_id,
                 )
             except Exception:
                 return None
@@ -165,6 +174,7 @@ class FilesTable:
                     meta=file.meta,
                     created_at=file.created_at,
                     updated_at=file.updated_at,
+                    client_id=file.client_id,
                 )
                 for file in db.query(File)
                 .filter(File.id.in_(ids))

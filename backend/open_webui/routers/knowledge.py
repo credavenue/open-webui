@@ -1,4 +1,6 @@
 from typing import List, Optional
+
+from boto3 import client
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 import logging
@@ -328,6 +330,7 @@ async def update_knowledge_by_id(
 
 class KnowledgeFileIdForm(BaseModel):
     file_id: str
+    client_id: Optional[str] = None
 
 
 @router.post("/{id}/file/add", response_model=Optional[KnowledgeFilesResponse])
@@ -371,7 +374,7 @@ def add_file_to_knowledge_by_id(
     try:
         process_file(
             request,
-            ProcessFileForm(file_id=form_data.file_id, collection_name=id),
+            ProcessFileForm(file_id=form_data.file_id, collection_name=id, client_id=form_data.client_id),
             user=user,
         )
     except Exception as e:

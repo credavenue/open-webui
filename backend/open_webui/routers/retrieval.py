@@ -1105,6 +1105,7 @@ def save_docs_to_vector_db(
     split: bool = True,
     add: bool = False,
     user=None,
+    client_id: Optional[str] = None,
 ) -> bool:
     def _get_docs_info(docs: list[Document]) -> str:
         docs_info = set()
@@ -1252,9 +1253,8 @@ def save_docs_to_vector_db(
             for idx, text in enumerate(texts)
         ]
 
-        VECTOR_DB_CLIENT.insert(
-            collection_name=collection_name,
-            items=items,
+        VECTOR_DB_CLIENT.upsert(
+            collection_name=collection_name, items=items, client_id=client_id
         )
 
         return True
@@ -1267,6 +1267,7 @@ class ProcessFileForm(BaseModel):
     file_id: str
     content: Optional[str] = None
     collection_name: Optional[str] = None
+    client_id: Optional[str] = None
 
 
 @router.post("/process/file")
@@ -1289,7 +1290,9 @@ def process_file(
 
             try:
                 # /files/{file_id}/data/content/update
-                VECTOR_DB_CLIENT.delete_collection(collection_name=f"file-{file.id}")
+                VECTOR_DB_CLIENT.delete_collection(
+                    collection_name=f"file-{file.id}"
+                )
             except:
                 # Audio file upload pipeline
                 pass
@@ -1427,6 +1430,7 @@ def process_file(
                     },
                     add=(True if form_data.collection_name else False),
                     user=user,
+                    client_id=form_data.client_id,
                 )
 
                 if result:
@@ -1444,6 +1448,7 @@ def process_file(
                         "content": text_content,
                     }
             except Exception as e:
+                log.exception(e)
                 raise e
         else:
             return {
@@ -1492,7 +1497,9 @@ def process_text(
     text_content = form_data.content
     log.debug(f"text_content: {text_content}")
 
-    result = save_docs_to_vector_db(request, docs, collection_name, user=user)
+    result = save_docs_to_vector_db(
+        request, docs, collection_name, client_id=user.id, user=user
+    )
     if result:
         return {
             "status": True,
@@ -1526,7 +1533,7 @@ def process_youtube_video(
         log.debug(f"text_content: {content}")
 
         save_docs_to_vector_db(
-            request, docs, collection_name, overwrite=True, user=user
+            request, docs, collection_name, client_id=user.id, overwrite=True, user=user
         )
 
         return {
@@ -1571,7 +1578,7 @@ def process_web(
 
         if not request.app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL:
             save_docs_to_vector_db(
-                request, docs, collection_name, overwrite=True, user=user
+                request, docs, collection_name, client_id=user.id, overwrite=True, user=user
             )
         else:
             collection_name = None
@@ -1929,6 +1936,7 @@ async def process_web_search(
                     request,
                     docs,
                     collection_name,
+                    client_id=user.id,
                     overwrite=True,
                     user=user,
                 )
@@ -1968,7 +1976,7 @@ def query_doc_handler(
         if request.app.state.config.ENABLE_RAG_HYBRID_SEARCH:
             collection_results = {}
             collection_results[form_data.collection_name] = VECTOR_DB_CLIENT.get(
-                collection_name=form_data.collection_name
+                collection_name=form_data.collection_name, client_id=user.id
             )
             return query_doc_with_hybrid_search(
                 collection_name=form_data.collection_name,
@@ -2082,12 +2090,15 @@ class DeleteForm(BaseModel):
 @router.post("/delete")
 def delete_entries_from_collection(form_data: DeleteForm, user=Depends(get_admin_user)):
     try:
-        if VECTOR_DB_CLIENT.has_collection(collection_name=form_data.collection_name):
+        if VECTOR_DB_CLIENT.has_collection(
+            collection_name=form_data.collection_name, client_id=user.id
+        ):
             file = Files.get_file_by_id(form_data.file_id)
             hash = file.hash
 
             VECTOR_DB_CLIENT.delete(
                 collection_name=form_data.collection_name,
+                client_id=user.id,
                 metadata={"hash": hash},
             )
             return {"status": True}
@@ -2206,6 +2217,7 @@ def process_files_batch(
                 request=request,
                 docs=all_docs,
                 collection_name=collection_name,
+                client_id=user.id,
                 add=True,
                 user=user,
             )

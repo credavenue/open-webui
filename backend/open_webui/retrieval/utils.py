@@ -81,6 +81,7 @@ def query_doc(
         log.debug(f"query_doc:doc {collection_name}")
         result = VECTOR_DB_CLIENT.search(
             collection_name=collection_name,
+            client_id=user.id if user else None,
             vectors=[query_embedding],
             limit=k,
         )
@@ -97,7 +98,9 @@ def query_doc(
 def get_doc(collection_name: str, user: UserModel = None):
     try:
         log.debug(f"get_doc:doc {collection_name}")
-        result = VECTOR_DB_CLIENT.get(collection_name=collection_name)
+        result = VECTOR_DB_CLIENT.get(
+            collection_name=collection_name, client_id=user.id if user else None
+        )
 
         if result:
             log.info(f"query_doc:result {result.ids} {result.metadatas}")
@@ -188,100 +191,24 @@ def query_doc_with_hybrid_search(
         raise e
 
 
-def merge_get_results(get_results: list[dict]) -> dict:
-    # Initialize lists to store combined data
-    combined_documents = []
-    combined_metadatas = []
-    combined_ids = []
-
-    for data in get_results:
-        combined_documents.extend(data["documents"][0])
-        combined_metadatas.extend(data["metadatas"][0])
-        combined_ids.extend(data["ids"][0])
-
-    # Create the output dictionary
-    result = {
-        "documents": [combined_documents],
-        "metadatas": [combined_metadatas],
-        "ids": [combined_ids],
-    }
-
-    return result
-
-
-def merge_and_sort_query_results(query_results: list[dict], k: int) -> dict:
-    # Initialize lists to store combined data
-    combined = dict()  # To store documents with unique document hashes
-
-    for data in query_results:
-        distances = data["distances"][0]
-        documents = data["documents"][0]
-        metadatas = data["metadatas"][0]
-
-        for distance, document, metadata in zip(distances, documents, metadatas):
-            if isinstance(document, str):
-                doc_hash = hashlib.sha256(
-                    document.encode()
-                ).hexdigest()  # Compute a hash for uniqueness
-
-                if doc_hash not in combined.keys():
-                    combined[doc_hash] = (distance, document, metadata)
-                    continue  # if doc is new, no further comparison is needed
-
-                # if doc is alredy in, but new distance is better, update
-                if distance > combined[doc_hash][0]:
-                    combined[doc_hash] = (distance, document, metadata)
-
-    combined = list(combined.values())
-    # Sort the list based on distances
-    combined.sort(key=lambda x: x[0], reverse=True)
-
-    # Slice to keep only the top k elements
-    sorted_distances, sorted_documents, sorted_metadatas = (
-        zip(*combined[:k]) if combined else ([], [], [])
-    )
-
-    # Create and return the output dictionary
-    return {
-        "distances": [list(sorted_distances)],
-        "documents": [list(sorted_documents)],
-        "metadatas": [list(sorted_metadatas)],
-    }
-
-
-def get_all_items_from_collections(collection_names: list[str]) -> dict:
-    results = []
-
-    for collection_name in collection_names:
-        if collection_name:
-            try:
-                result = get_doc(collection_name=collection_name)
-                if result is not None:
-                    results.append(result.model_dump())
-            except Exception as e:
-                log.exception(f"Error when querying the collection: {e}")
-        else:
-            pass
-
-    return merge_get_results(results)
-
-
 def query_collection(
     collection_names: list[str],
     queries: list[str],
     embedding_function,
     k: int,
-) -> dict:
+    user: UserModel = None,
+):
     results = []
     error = False
 
     def process_query_collection(collection_name, query_embedding):
         try:
             if collection_name:
-                result = query_doc(
+                result = VECTOR_DB_CLIENT.search(
                     collection_name=collection_name,
-                    k=k,
-                    query_embedding=query_embedding,
+                    client_id=user.id if user else None,
+                    vectors=[query_embedding],
+                    limit=k,
                 )
                 if result is not None:
                     return result.model_dump(), None
@@ -394,224 +321,82 @@ def query_collection_with_hybrid_search(
     return merge_and_sort_query_results(results, k=k)
 
 
-def get_embedding_function(
-    embedding_engine,
-    embedding_model,
-    embedding_function,
-    url,
-    key,
-    embedding_batch_size,
-    azure_api_version=None,
-):
-    if embedding_engine == "":
-        return lambda query, prefix=None, user=None: embedding_function.encode(
-            query, **({"prompt": prefix} if prefix else {})
-        ).tolist()
-    elif embedding_engine in ["ollama", "openai", "azure_openai"]:
-        func = lambda query, prefix=None, user=None: generate_embeddings(
-            engine=embedding_engine,
-            model=embedding_model,
-            text=query,
-            prefix=prefix,
-            url=url,
-            key=key,
-            user=user,
-            azure_api_version=azure_api_version,
-        )
+def merge_get_results(get_results: list[dict]) -> dict:
+    # Initialize lists to store combined data
+    combined_documents = []
+    combined_metadatas = []
+    combined_ids = []
 
-        def generate_multiple(query, prefix, user, func):
-            if isinstance(query, list):
-                embeddings = []
-                for i in range(0, len(query), embedding_batch_size):
-                    embeddings.extend(
-                        func(
-                            query[i : i + embedding_batch_size],
-                            prefix=prefix,
-                            user=user,
-                        )
-                    )
-                return embeddings
-            else:
-                return func(query, prefix, user)
+    for data in get_results:
+        combined_documents.extend(data["documents"][0])
+        combined_metadatas.extend(data["metadatas"][0])
+        combined_ids.extend(data["ids"][0])
 
-        return lambda query, prefix=None, user=None: generate_multiple(
-            query, prefix, user, func
-        )
-    else:
-        raise ValueError(f"Unknown embedding engine: {embedding_engine}")
+    # Create the output dictionary
+    result = {
+        "documents": [combined_documents],
+        "metadatas": [combined_metadatas],
+        "ids": [combined_ids],
+    }
+
+    return result
 
 
-def get_sources_from_files(
-    request,
-    files,
-    queries,
-    embedding_function,
-    k,
-    reranking_function,
-    k_reranker,
-    r,
-    hybrid_bm25_weight,
-    hybrid_search,
-    full_context=False,
-):
-    log.debug(
-        f"files: {files} {queries} {embedding_function} {reranking_function} {full_context}"
+def merge_and_sort_query_results(query_results: list[dict], k: int) -> dict:
+    # Initialize lists to store combined data
+    combined = dict()  # To store documents with unique document hashes
+
+    for data in query_results:
+        distances = data["distances"][0]
+        documents = data["documents"][0]
+        metadatas = data["metadatas"][0]
+
+        for distance, document, metadata in zip(distances, documents, metadatas):
+            if isinstance(document, str):
+                doc_hash = hashlib.sha256(
+                    document.encode()
+                ).hexdigest()  # Compute a hash for uniqueness
+
+                if doc_hash not in combined.keys():
+                    combined[doc_hash] = (distance, document, metadata)
+                    continue  # if doc is new, no further comparison is needed
+
+                # if doc is alredy in, but new distance is better, update
+                if distance > combined[doc_hash][0]:
+                    combined[doc_hash] = (distance, document, metadata)
+
+    combined = list(combined.values())
+    # Sort the list based on distances
+    combined.sort(key=lambda x: x[0], reverse=True)
+
+    # Slice to keep only the top k elements
+    sorted_distances, sorted_documents, sorted_metadatas = (
+        zip(*combined[:k]) if combined else ([], [], [])
     )
 
-    extracted_collections = []
-    relevant_contexts = []
+    # Create and return the output dictionary
+    return {
+        "distances": [list(sorted_distances)],
+        "documents": [list(sorted_documents)],
+        "metadatas": [list(sorted_metadatas)],
+    }
 
-    for file in files:
 
-        context = None
-        if file.get("docs"):
-            # BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL
-            context = {
-                "documents": [[doc.get("content") for doc in file.get("docs")]],
-                "metadatas": [[doc.get("metadata") for doc in file.get("docs")]],
-            }
-        elif file.get("context") == "full":
-            # Manual Full Mode Toggle
-            context = {
-                "documents": [[file.get("file").get("data", {}).get("content")]],
-                "metadatas": [[{"file_id": file.get("id"), "name": file.get("name")}]],
-            }
-        elif (
-            file.get("type") != "web_search"
-            and request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL
-        ):
-            # BYPASS_EMBEDDING_AND_RETRIEVAL
-            if file.get("type") == "collection":
-                file_ids = file.get("data", {}).get("file_ids", [])
+def get_all_items_from_collections(collection_names: list[str]) -> dict:
+    results = []
 
-                documents = []
-                metadatas = []
-                for file_id in file_ids:
-                    file_object = Files.get_file_by_id(file_id)
-
-                    if file_object:
-                        documents.append(file_object.data.get("content", ""))
-                        metadatas.append(
-                            {
-                                "file_id": file_id,
-                                "name": file_object.filename,
-                                "source": file_object.filename,
-                            }
-                        )
-
-                context = {
-                    "documents": [documents],
-                    "metadatas": [metadatas],
-                }
-
-            elif file.get("id"):
-                file_object = Files.get_file_by_id(file.get("id"))
-                if file_object:
-                    context = {
-                        "documents": [[file_object.data.get("content", "")]],
-                        "metadatas": [
-                            [
-                                {
-                                    "file_id": file.get("id"),
-                                    "name": file_object.filename,
-                                    "source": file_object.filename,
-                                }
-                            ]
-                        ],
-                    }
-            elif file.get("file").get("data"):
-                context = {
-                    "documents": [[file.get("file").get("data", {}).get("content")]],
-                    "metadatas": [
-                        [file.get("file").get("data", {}).get("metadata", {})]
-                    ],
-                }
+    for collection_name in collection_names:
+        if collection_name:
+            try:
+                result = get_doc(collection_name=collection_name)
+                if result is not None:
+                    results.append(result.model_dump())
+            except Exception as e:
+                log.exception(f"Error when querying the collection: {e}")
         else:
-            collection_names = []
-            if file.get("type") == "collection":
-                if file.get("legacy"):
-                    collection_names = file.get("collection_names", [])
-                else:
-                    collection_names.append(file["id"])
-            elif file.get("collection_name"):
-                collection_names.append(file["collection_name"])
-            elif file.get("id"):
-                if file.get("legacy"):
-                    collection_names.append(f"{file['id']}")
-                else:
-                    collection_names.append(f"file-{file['id']}")
+            pass
 
-            collection_names = set(collection_names).difference(extracted_collections)
-            if not collection_names:
-                log.debug(f"skipping {file} as it has already been extracted")
-                continue
-
-            if full_context:
-                try:
-                    context = get_all_items_from_collections(collection_names)
-                except Exception as e:
-                    log.exception(e)
-
-            else:
-                try:
-                    context = None
-                    if file.get("type") == "text":
-                        context = file["content"]
-                    else:
-                        if hybrid_search:
-                            try:
-                                context = query_collection_with_hybrid_search(
-                                    collection_names=collection_names,
-                                    queries=queries,
-                                    embedding_function=embedding_function,
-                                    k=k,
-                                    reranking_function=reranking_function,
-                                    k_reranker=k_reranker,
-                                    r=r,
-                                    hybrid_bm25_weight=hybrid_bm25_weight,
-                                )
-                            except Exception as e:
-                                log.debug(
-                                    "Error when using hybrid search, using"
-                                    " non hybrid search as fallback."
-                                )
-
-                        if (not hybrid_search) or (context is None):
-                            context = query_collection(
-                                collection_names=collection_names,
-                                queries=queries,
-                                embedding_function=embedding_function,
-                                k=k,
-                            )
-                except Exception as e:
-                    log.exception(e)
-
-            extracted_collections.extend(collection_names)
-
-        if context:
-            if "data" in file:
-                del file["data"]
-
-            relevant_contexts.append({**context, "file": file})
-
-    sources = []
-    for context in relevant_contexts:
-        try:
-            if "documents" in context:
-                if "metadatas" in context:
-                    source = {
-                        "source": context["file"],
-                        "document": context["documents"][0],
-                        "metadata": context["metadatas"][0],
-                    }
-                    if "distances" in context and context["distances"]:
-                        source["distances"] = context["distances"][0]
-
-                    sources.append(source)
-        except Exception as e:
-            log.exception(e)
-
-    return sources
+    return merge_get_results(results)
 
 
 def get_model_path(model: str, update_model: bool = False):
@@ -905,3 +690,224 @@ class RerankCompressor(BaseDocumentCompressor):
             )
             final_results.append(doc)
         return final_results
+
+
+def get_sources_from_files(
+    request,
+    files,
+    queries,
+    embedding_function,
+    k,
+    reranking_function,
+    k_reranker,
+    r,
+    hybrid_bm25_weight,
+    hybrid_search,
+    full_context=False,
+):
+    log.debug(
+        f"files: {files} {queries} {embedding_function} {reranking_function} {full_context}"
+    )
+
+    extracted_collections = []
+    relevant_contexts = []
+
+    for file in files:
+
+        context = None
+        if file.get("docs"):
+            # BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL
+            context = {
+                "documents": [[doc.get("content") for doc in file.get("docs")]],
+                "metadatas": [[doc.get("metadata") for doc in file.get("docs")]],
+            }
+        elif file.get("context") == "full":
+            # Manual Full Mode Toggle
+            context = {
+                "documents": [[file.get("file").get("data", {}).get("content")]],
+                "metadatas": [[{"file_id": file.get("id"), "name": file.get("name")}]],
+            }
+        elif (
+            file.get("type") != "web_search"
+            and request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL
+        ):
+            # BYPASS_EMBEDDING_AND_RETRIEVAL
+            if file.get("type") == "collection":
+                file_ids = file.get("data", {}).get("file_ids", [])
+
+                documents = []
+                metadatas = []
+                for file_id in file_ids:
+                    file_object = Files.get_file_by_id(file_id)
+
+                    if file_object:
+                        documents.append(file_object.data.get("content", ""))
+                        metadatas.append(
+                            {
+                                "file_id": file_id,
+                                "name": file_object.filename,
+                                "source": file_object.filename,
+                            }
+                        )
+
+                context = {
+                    "documents": [documents],
+                    "metadatas": [metadatas],
+                }
+
+            elif file.get("id"):
+                file_object = Files.get_file_by_id(file.get("id"))
+                if file_object:
+                    context = {
+                        "documents": [[file_object.data.get("content", "")]],
+                        "metadatas": [
+                            [
+                                {
+                                    "file_id": file.get("id"),
+                                    "name": file_object.filename,
+                                    "source": file_object.filename,
+                                }
+                            ]
+                        ],
+                    }
+            elif file.get("file").get("data"):
+                context = {
+                    "documents": [[file.get("file").get("data", {}).get("content")]],
+                    "metadatas": [
+                        [file.get("file").get("data", {}).get("metadata", {})]
+                    ],
+                }
+        else:
+            collection_names = []
+            if file.get("type") == "collection":
+                if file.get("legacy"):
+                    collection_names = file.get("collection_names", [])
+                else:
+                    collection_names.append(file["id"])
+            elif file.get("collection_name"):
+                collection_names.append(file["collection_name"])
+            elif file.get("id"):
+                if file.get("legacy"):
+                    collection_names.append(f"{file['id']}")
+                else:
+                    collection_names.append(f"file-{file['id']}")
+
+            collection_names = set(collection_names).difference(extracted_collections)
+            if not collection_names:
+                log.debug(f"skipping {file} as it has already been extracted")
+                continue
+
+            if full_context:
+                try:
+                    context = get_all_items_from_collections(collection_names)
+                except Exception as e:
+                    log.exception(e)
+
+            else:
+                try:
+                    context = None
+                    if file.get("type") == "text":
+                        context = file["content"]
+                    else:
+                        if hybrid_search:
+                            try:
+                                context = query_collection_with_hybrid_search(
+                                    collection_names=collection_names,
+                                    queries=queries,
+                                    embedding_function=embedding_function,
+                                    k=k,
+                                    reranking_function=reranking_function,
+                                    k_reranker=k_reranker,
+                                    r=r,
+                                    hybrid_bm25_weight=hybrid_bm25_weight,
+                                )
+                            except Exception as e:
+                                log.debug(
+                                    "Error when using hybrid search, using"
+                                    " non hybrid search as fallback."
+                                )
+
+                        if (not hybrid_search) or (context is None):
+                            context = query_collection(
+                                collection_names=collection_names,
+                                queries=queries,
+                                embedding_function=embedding_function,
+                                k=k,
+                                user=request.user,
+                            )
+                except Exception as e:
+                    log.exception(e)
+
+            extracted_collections.extend(collection_names)
+
+        if context:
+            if "data" in file:
+                del file["data"]
+
+            relevant_contexts.append({**context, "file": file})
+
+    sources = []
+    for context in relevant_contexts:
+        try:
+            if "documents" in context:
+                if "metadatas" in context:
+                    source = {
+                        "source": context["file"],
+                        "document": context["documents"][0],
+                        "metadata": context["metadatas"][0],
+                    }
+                    if "distances" in context and context["distances"]:
+                        source["distances"] = context["distances"][0]
+
+                    sources.append(source)
+        except Exception as e:
+            log.exception(e)
+
+    return sources
+
+
+def get_embedding_function(
+    embedding_engine,
+    embedding_model,
+    embedding_function,
+    url,
+    key,
+    embedding_batch_size,
+    azure_api_version=None,
+):
+    if embedding_engine == "":
+        return lambda query, prefix=None, user=None: embedding_function.encode(
+            query, **({"prompt": prefix} if prefix else {})
+        ).tolist()
+    elif embedding_engine in ["ollama", "openai", "azure_openai"]:
+        func = lambda query, prefix=None, user=None: generate_embeddings(
+            engine=embedding_engine,
+            model=embedding_model,
+            text=query,
+            prefix=prefix,
+            url=url,
+            key=key,
+            user=user,
+            azure_api_version=azure_api_version,
+        )
+
+        def generate_multiple(query, prefix, user, func):
+            if isinstance(query, list):
+                embeddings = []
+                for i in range(0, len(query), embedding_batch_size):
+                    embeddings.extend(
+                        func(
+                            query[i : i + embedding_batch_size],
+                            prefix=prefix,
+                            user=user,
+                        )
+                    )
+                return embeddings
+            else:
+                return func(query, prefix, user)
+
+        return lambda query, prefix=None, user=None: generate_multiple(
+            query, prefix, user, func
+        )
+    else:
+        raise ValueError(f"Unknown embedding engine: {embedding_engine}")
