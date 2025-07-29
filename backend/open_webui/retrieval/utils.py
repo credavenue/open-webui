@@ -46,6 +46,7 @@ class VectorSearchRetriever(BaseRetriever):
     collection_name: Any
     embedding_function: Any
     top_k: int
+    client_id: str = None
 
     def _get_relevant_documents(
         self,
@@ -57,6 +58,7 @@ class VectorSearchRetriever(BaseRetriever):
             collection_name=self.collection_name,
             vectors=[self.embedding_function(query, RAG_EMBEDDING_QUERY_PREFIX)],
             limit=self.top_k,
+            client_id=self.client_id
         )
 
         ids = result.ids[0]
@@ -75,15 +77,15 @@ class VectorSearchRetriever(BaseRetriever):
 
 
 def query_doc(
-    collection_name: str, query_embedding: list[float], k: int, user: UserModel = None
+    collection_name: str, query_embedding: list[float], k: int, user: UserModel = None, client_id: str = None
 ):
     try:
         log.debug(f"query_doc:doc {collection_name}")
         result = VECTOR_DB_CLIENT.search(
             collection_name=collection_name,
-            client_id=user.id if user else None,
             vectors=[query_embedding],
             limit=k,
+            client_id=client_id,
         )
 
         if result:
@@ -95,11 +97,11 @@ def query_doc(
         raise e
 
 
-def get_doc(collection_name: str, user: UserModel = None):
+def get_doc(collection_name: str, user: UserModel = None, client_id: str = None):
     try:
         log.debug(f"get_doc:doc {collection_name}")
         result = VECTOR_DB_CLIENT.get(
-            collection_name=collection_name, client_id=user.id if user else None
+            collection_name=collection_name, client_id=client_id
         )
 
         if result:
@@ -121,6 +123,7 @@ def query_doc_with_hybrid_search(
     k_reranker: int,
     r: float,
     hybrid_bm25_weight: float,
+    client_id: str = None,
 ) -> dict:
     try:
         log.debug(f"query_doc_with_hybrid_search:doc {collection_name}")
@@ -134,6 +137,7 @@ def query_doc_with_hybrid_search(
             collection_name=collection_name,
             embedding_function=embedding_function,
             top_k=k,
+            client_id=client_id,
         )
 
         if hybrid_bm25_weight <= 0:
@@ -196,8 +200,8 @@ def query_collection(
     queries: list[str],
     embedding_function,
     k: int,
-    user: UserModel = None,
-):
+    client_id: str = None,
+) -> dict:
     results = []
     error = False
 
@@ -206,9 +210,9 @@ def query_collection(
             if collection_name:
                 result = VECTOR_DB_CLIENT.search(
                     collection_name=collection_name,
-                    client_id=user.id if user else None,
                     vectors=[query_embedding],
                     limit=k,
+                    client_id=client_id,
                 )
                 if result is not None:
                     return result.model_dump(), None
@@ -254,6 +258,7 @@ def query_collection_with_hybrid_search(
     k_reranker: int,
     r: float,
     hybrid_bm25_weight: float,
+    client_id: str = None,
 ) -> dict:
     results = []
     error = False
@@ -266,7 +271,7 @@ def query_collection_with_hybrid_search(
                 f"query_collection_with_hybrid_search:VECTOR_DB_CLIENT.get:collection {collection_name}"
             )
             collection_results[collection_name] = VECTOR_DB_CLIENT.get(
-                collection_name=collection_name
+                collection_name=collection_name, client_id=client_id
             )
         except Exception as e:
             log.exception(f"Failed to fetch collection {collection_name}: {e}")
@@ -288,6 +293,7 @@ def query_collection_with_hybrid_search(
                 k_reranker=k_reranker,
                 r=r,
                 hybrid_bm25_weight=hybrid_bm25_weight,
+                client_id=client_id,
             )
             return result, None
         except Exception as e:
@@ -382,13 +388,13 @@ def merge_and_sort_query_results(query_results: list[dict], k: int) -> dict:
     }
 
 
-def get_all_items_from_collections(collection_names: list[str]) -> dict:
+def get_all_items_from_collections(collection_names: list[str], client_id: str = None) -> dict:
     results = []
 
     for collection_name in collection_names:
         if collection_name:
             try:
-                result = get_doc(collection_name=collection_name)
+                result = get_doc(collection_name=collection_name, client_id=client_id)
                 if result is not None:
                     results.append(result.model_dump())
             except Exception as e:
@@ -704,6 +710,7 @@ def get_sources_from_files(
     hybrid_bm25_weight,
     hybrid_search,
     full_context=False,
+    client_id: str = None,
 ):
     log.debug(
         f"files: {files} {queries} {embedding_function} {reranking_function} {full_context}"
@@ -799,7 +806,7 @@ def get_sources_from_files(
 
             if full_context:
                 try:
-                    context = get_all_items_from_collections(collection_names)
+                    context = get_all_items_from_collections(collection_names, client_id=client_id)
                 except Exception as e:
                     log.exception(e)
 
@@ -820,6 +827,7 @@ def get_sources_from_files(
                                     k_reranker=k_reranker,
                                     r=r,
                                     hybrid_bm25_weight=hybrid_bm25_weight,
+                                    client_id=client_id,
                                 )
                             except Exception as e:
                                 log.debug(
@@ -833,7 +841,7 @@ def get_sources_from_files(
                                 queries=queries,
                                 embedding_function=embedding_function,
                                 k=k,
-                                user=request.user,
+                                client_id=client_id,
                             )
                 except Exception as e:
                     log.exception(e)

@@ -606,6 +606,9 @@ async def chat_completion_files_handler(
 ) -> tuple[dict, dict[str, list]]:
     sources = []
 
+    # Extract client_id from request body
+    client_id = body.get("client_id", None)
+
     if files := body.get("metadata", {}).get("files", None):
         queries = []
         try:
@@ -659,6 +662,7 @@ async def chat_completion_files_handler(
                         hybrid_bm25_weight=request.app.state.config.HYBRID_BM25_WEIGHT,
                         hybrid_search=request.app.state.config.ENABLE_RAG_HYBRID_SEARCH,
                         full_context=request.app.state.config.RAG_FULL_CONTEXT,
+                        client_id=client_id,
                     ),
                 )
         except Exception as e:

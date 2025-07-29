@@ -482,7 +482,7 @@ class PgvectorClient(VectorDBBase):
             return None
 
     def get(
-        self, collection_name: str, limit: Optional[int] = None
+        self, collection_name: str, limit: Optional[int] = None, client_id: Optional[str] = None
     ) -> Optional[GetResult]:
         try:
             if PGVECTOR_PGCRYPTO:
@@ -495,6 +495,8 @@ class PgvectorClient(VectorDBBase):
                         DocumentChunk.vmetadata, PGVECTOR_PGCRYPTO_KEY, JSONB
                     ).label("vmetadata"),
                 ).where(DocumentChunk.collection_name == collection_name)
+                if client_id is not None:
+                    stmt = stmt.where(DocumentChunk.client_id == client_id)
                 if limit is not None:
                     stmt = stmt.limit(limit)
                 results = self.session.execute(stmt).all()
@@ -506,6 +508,8 @@ class PgvectorClient(VectorDBBase):
                 query = self.session.query(DocumentChunk).filter(
                     DocumentChunk.collection_name == collection_name
                 )
+                if client_id is not None:
+                    query = query.filter(DocumentChunk.client_id == client_id)
                 if limit is not None:
                     query = query.limit(limit)
 
