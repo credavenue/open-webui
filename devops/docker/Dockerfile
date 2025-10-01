@@ -25,11 +25,14 @@ FROM node:21-alpine3.19 as build
 ARG BUILD_HASH
 
 ENV NODE_OPTIONS="--max_old_space_size=8192"
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true \
+    NPM_CONFIG_AUDIT=false \
+    NPM_CONFIG_FUND=false
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 ENV APP_BUILD_HASH=${BUILD_HASH}
