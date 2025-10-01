@@ -128,39 +128,6 @@
 		await setSessionUser(sessionUser, localStorage.getItem('redirectPath') || null);
 	};
 
-	const clearCookiesAndSiteData = async () => {
-       	const response = await fetch(`${WEBUI_API_BASE_URL}/auths/clear-cookies`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.log(err);
-			return null;
-		});
-
-		// Clear caches
-		if ('caches' in window) {
-			caches.keys().then((names) => {
-				names.forEach((name) => {
-					caches.delete(name);
-				});
-			});
-		}
-
-		// Clear localStorage and sessionStorage
-		localStorage.clear();
-		sessionStorage.clear();
-
-		toast.success("Cookies and site data cleared.");
-		goto('/auth');
-	};
-
 	let onboarding = false;
 
 	async function setLogoImage() {
@@ -556,14 +523,6 @@
 											>
 										</button>
 									{/if}
-									<div class="mt-2">
-										<button 
-										class="flex justify-center items-center text-xs w-full text-center underline"
-										type="button"
-										on:click={clearCookiesAndSiteData}>
-											'Clear Cookies and Site Data'
-										</button>
-									</div>
 									{#if $config?.oauth?.providers?.feishu}
 										<button
 											class="flex justify-center items-center bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
