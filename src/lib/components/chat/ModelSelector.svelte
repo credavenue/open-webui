@@ -49,7 +49,7 @@
 	{#each selectedModels as selectedModel, selectedModelIdx}
 		<div class="flex w-full max-w-fit">
 			<div class="overflow-hidden w-full">
-				<div class="mr-1 max-w-full">
+				<div class="max-w-full {($settings?.highContrastMode ?? false) ? 'm-1' : 'mr-1'}">
 					<Selector
 						id={`${selectedModelIdx}`}
 						placeholder={$i18n.t('Select a model')}
@@ -58,10 +58,6 @@
 							label: model.name,
 							model: model
 						}))}
-						showTemporaryChatControl={$user?.role === 'user'
-							? ($user?.permissions?.chat?.temporary ?? true) &&
-								!($user?.permissions?.chat?.temporary_enforced ?? false)
-							: true}
 						{pinModelHandler}
 						bind:value={selectedModel}
 					/>
@@ -129,7 +125,7 @@
 
 {#if showSetDefault}
 	<div
-		class="absolute text-left mt-[1px] ml-1 text-[0.7rem] text-gray-600 dark:text-gray-400 font-primary"
+		class="relative text-left mt-[1px] ml-1 text-[0.7rem] text-gray-600 dark:text-gray-400 font-primary"
 	>
 		<button on:click={saveDefaultModel}> {$i18n.t('Set as default')}</button>
 	</div>
